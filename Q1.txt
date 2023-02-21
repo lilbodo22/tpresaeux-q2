@@ -1,0 +1,64 @@
+import java.io.*;
+import java.net.*;
+
+public class MonServeur {
+    public static void main(String[] args) {
+        try {
+            ServerSocket ss = new ServerSocket(1234);
+            System.out.println("Serveur en attente de connexion...");
+            Socket socket = ss.accept();
+            System.out.println("Client connecté");
+
+            // Ouverture des flux de lecture et écriture
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+
+            // Lecture du message envoyé par le client
+            String message = reader.readLine();
+            System.out.println("Le client a envoyé le message suivant : " + message);
+
+            // Envoi d'une réponse au client
+            writer.println("Bonjour client, j'ai bien reçu votre message !");
+
+            // Fermeture des flux et de la connexion
+            reader.close();
+            writer.close();
+            socket.close();
+            ss.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+//////////////////
+
+
+import java.io.*;
+import java.net.*;
+
+public class MonClient {
+    public static void main(String[] args) {
+        try {
+            // Connexion au serveur
+            Socket socket = new Socket("localhost", 1234);
+
+            // Ouverture des flux de lecture et écriture
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+
+            // Envoi d'un message au serveur
+            writer.println("Bonjour serveur, comment allez-vous ?");
+
+            // Lecture de la réponse du serveur
+            String reponse = reader.readLine();
+            System.out.println("Le serveur a répondu : " + reponse);
+
+            // Fermeture des flux et de la connexion
+            reader.close();
+            writer.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
