@@ -1,0 +1,110 @@
+import java.net.*;
+import java.io.*;
+
+public class MultiThreadServer {
+    public static void main(String[] args) {
+        try {
+            // Créer le socket d'écoute du serveur sur le port 5000
+            ServerSocket serverSocket = new ServerSocket(5000);
+            System.out.println("Serveur démarré sur le port 5000...");
+
+            int numClients = 0; // Nombre de clients connectés
+            while (true) {
+                // Attendre qu'un client se connecte
+                Socket clientSocket = serverSocket.accept();
+                numClients++;
+                System.out.println("Connexion établie avec le client "
+                        + clientSocket.getInetAddress().getHostName());
+                System.out.println("Nombre de clients connectés : " + numClients);
+
+                // Créer un nouveau thread pour traiter la connexion avec le client
+                Thread t = new ClientHandler(clientSocket, numClients);
+                t.start();
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur : " + e.getMessage());
+        }
+    }
+}
+
+class ClientHandler extends Thread {
+    private Socket clientSocket;
+    private int clientNum;
+
+    public ClientHandler(Socket socket, int num) {
+        this.clientSocket = socket;
+        this.clientNum = num;
+    }
+
+    public void run() {
+        try {
+            // Ouvrir les flux de communication avec le client
+            InputStreamReader isr = new InputStreamReader(clientSocket.getInputStream());
+            BufferedReader in = new BufferedReader(isr);
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream());
+
+            // Envoyer le nombre de clients connectés au nouveau client
+            out.println("Nombre de clients connectés : " + clientNum);
+            out.flush();
+
+            while (true) {
+                // Lire le message envoyé par le client
+                String message = in.readLine();
+                if (message == null) {
+                    break;
+                }
+                System.out.println("Message reçu du client " + clientNum + ": " + message);
+
+                // Envoyer une réponse au client
+                out.println("Bonjour, je suis le serveur!");
+                out.flush();
+
+                // Ralentir l'exécution pour simuler un traitement long
+                Thread.sleep(500);
+            }
+
+            // Fermer les flux de communication avec le client
+            in.close();
+            out.close();
+            clientSocket.close();
+            System.out.println("Connexion avec le client " + clientNum + " fermée.");
+        } catch (IOException e) {
+            System.err.println("Erreur : " + e.getMessage());
+        } catch (InterruptedException e) {
+            System.err.println("Erreur : " + e.getMessage());
+        }
+    }
+}
+//////
+
+import java.net.*;
+import java.io.*;
+
+public class MonoThreadClient {
+    public static void main(String[] args) {
+        try {
+            // Créer le socket de connexion au serveur sur le port 5000
+            Socket socket = new Socket("localhost", 5000);
+
+            // Ouvrir les flux de communication avec le serveur
+            PrintWriter out = new PrintWriter(socket.getOutputStream());
+            InputStreamReader isr = new InputStreamReader(socket.getInputStream());
+            BufferedReader in = new BufferedReader(isr);
+
+            // Envoyer un message au serveur
+            out.println("Bonjour, comment ça va?");
+            out.flush();
+
+            // Lire la réponse du serveur
+            String reponse = in.readLine();
+            System.out.println("Réponse du serveur: " + reponse);
+
+            // Fermer les flux de communication avec le serveur
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            System.err.println("Erreur : " + e.getMessage());
+        }
+    }
+}
