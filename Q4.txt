@@ -1,0 +1,109 @@
+import java.io.*;
+import java.net.*;
+
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = null;
+        boolean listening = true;
+
+        try {
+            serverSocket = new ServerSocket(4444);
+        } catch (IOException e) {
+            System.err.println("Could not listen on port: 4444.");
+            System.exit(-1);
+        }
+
+        System.out.println("Server started. Listening on port 4444.");
+
+        while (listening) {
+            Socket clientSocket = null;
+
+            try {
+                clientSocket = serverSocket.accept();
+                System.out.println("Accepted connection from client: " + clientSocket.getInetAddress().getHostAddress());
+            } catch (IOException e) {
+                System.err.println("Accept failed.");
+                System.exit(-1);
+            }
+
+            // Création d'un nouveau thread pour gérer la connexion du client
+            Thread clientThread = new Thread(new ClientHandler(clientSocket));
+            clientThread.start();
+        }
+
+        serverSocket.close();
+    }
+}
+
+class ClientHandler implements Runnable {
+    private Socket clientSocket;
+
+    public ClientHandler(Socket socket) {
+        this.clientSocket = socket;
+    }
+
+    public void run() {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                System.out.println("Received message from client " + clientSocket.getInetAddress().getHostAddress() + ": " + inputLine);
+                out.println("Server received your message: " + inputLine);
+            }
+
+            in.close();
+            out.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+///////
+
+import java.io.*;
+import java.net.*;
+
+public class Client {
+    public static void main(String[] args) throws IOException {
+        String serverHostname = "localhost";
+        int port = 4444;
+
+        System.out.println("Connecting to server " + serverHostname + " on port " + port);
+
+        Socket clientSocket = null;
+        PrintWriter out = null;
+        BufferedReader in = null;
+
+        try {
+            clientSocket = new Socket(serverHostname, port);
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.err.println("Unknown host: " + serverHostname);
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Could not connect to " + serverHostname);
+            System.exit(1);
+        }
+
+        System.out.println("Connected to server " + serverHostname);
+
+        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+        String userInput;
+
+        while ((userInput = stdIn.readLine()) != null) {
+            out.println(userInput);
+
+            String response = in.readLine();
+            System.out.println("Server response: " + response);
+        }
+
+        out.close();
+        in.close();
+        stdIn.close();
+        clientSocket.close();
+    }
+}
